@@ -29,39 +29,39 @@ func New() *Notify {
 }
 
 func (n *Notify) Send(message interface{}) error {
-	var newMessage string
-	switch v := message.(type) {
-	case []string:
-		newMessage = strings.Join(v, "\n")
-	case string:
+	var errs []error
 
-		newMessage = v
+	switch msg := message.(type) {
+	case []string, string:
+		// 統一處理字串相關的消息
+		strMsg := func() string {
+			switch v := msg.(type) {
+			case string:
+				return v
+			case []string:
+				return strings.Join(v, "\n")
+			default:
+				return ""
+			}
+		}()
+		for _, notify := range n.Notify {
+			if err := notify.Send(n.Client, strMsg); err != nil {
+				log.Println("notify send error", err)
+				errs = append(errs, err)
+			}
+		}
+
+	case map[string]interface{}:
+		// 處理 Raw message
+		for _, notify := range n.Notify {
+			if err := notify.SendRaw(n.Client, msg); err != nil {
+				log.Println("notify send error", err)
+				errs = append(errs, err)
+			}
+		}
+
 	default:
-		return errors.New("invalid message")
-	}
-
-	var errs []error
-	for _, notify := range n.Notify {
-		if err := notify.Send(n.Client, newMessage); err != nil {
-			log.Println("notify send error", err)
-			errs = append(errs, err)
-		}
-	}
-
-	if len(errs) > 0 {
-		return errors.Join(errs...)
-	}
-	return nil
-}
-
-func (n *Notify) SendRaw(message map[string]interface{}) error {
-
-	var errs []error
-	for _, notify := range n.Notify {
-		if err := notify.SendRaw(n.Client, message); err != nil {
-			log.Println("notify send error", err)
-			errs = append(errs, err)
-		}
+		return errors.New("invalid message format")
 	}
 
 	if len(errs) > 0 {
