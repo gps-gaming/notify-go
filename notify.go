@@ -70,6 +70,20 @@ func (n *Notify) SendRaw(message map[string]interface{}) error {
 	return nil
 }
 
+func request(client *http.Client, req *http.Request) error {
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf(req.Host, " API responded with status: %v", resp.Status)
+	}
+
+	return nil
+}
+
 func (n *Notify) Telegram(botToken, chatId string) *Notify {
 	n.Notify = append(n.Notify, &telegram{
 		BotToken: botToken,
@@ -99,17 +113,7 @@ func (t *telegram) Send(client *http.Client, message string) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("telegram API responded with status: %v", resp.Status)
-	}
-
-	return nil
+	return request(client, req)
 }
 
 func (t *telegram) SendRaw(client *http.Client, message map[string]interface{}) error {
@@ -130,17 +134,7 @@ func (t *telegram) SendRaw(client *http.Client, message map[string]interface{}) 
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("telegram API responded with status: %v", resp.Status)
-	}
-
-	return nil
+	return request(client, req)
 }
 
 func (n *Notify) Line(botToken, chatId string) *Notify {
@@ -176,17 +170,7 @@ func (l *line) Send(client *http.Client, message string) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+l.BotToken)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("LINE API responded with status: %v", resp.Status)
-	}
-
-	return nil
+	return request(client, req)
 }
 func (l *line) SendRaw(client *http.Client, message map[string]interface{}) error {
 	l.Messages = append(l.Messages, message)
@@ -204,17 +188,7 @@ func (l *line) SendRaw(client *http.Client, message map[string]interface{}) erro
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+l.BotToken)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("LINE API responded with status: %v", resp.Status)
-	}
-
-	return nil
+	return request(client, req)
 }
 
 func (n *Notify) Discord(botToken, channelID string) *Notify {
@@ -248,17 +222,7 @@ func (d *discord) Send(client *http.Client, message string) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bot "+d.BotToken)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Discord API responded with status: %v", resp.Status)
-	}
-
-	return nil
+	return request(client, req)
 }
 
 func (d *discord) SendRaw(client *http.Client, message map[string]interface{}) error {
@@ -277,15 +241,5 @@ func (d *discord) SendRaw(client *http.Client, message map[string]interface{}) e
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bot "+d.BotToken)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Discord API responded with status: %v", resp.Status)
-	}
-
-	return nil
+	return request(client, req)
 }
