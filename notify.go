@@ -16,10 +16,10 @@ type INotify interface {
 }
 
 type Notify struct {
-	Client   *http.Client
-	BotToken string
-	ChatID   string
-	Notify   []INotify
+	Client    *http.Client
+	BotToken  string
+	ChatID    string
+	Notifiers []INotify
 }
 
 func New() *Notify {
@@ -33,7 +33,7 @@ func (n *Notify) Send(message interface{}) error {
 
 	switch msg := message.(type) {
 	case string:
-		for _, notify := range n.Notify {
+		for _, notify := range n.Notifiers {
 			if err := notify.Send(n.Client, msg); err != nil {
 				log.Println("notify send error", err)
 				errs = append(errs, err)
@@ -42,7 +42,7 @@ func (n *Notify) Send(message interface{}) error {
 
 	case []string:
 		newMessage := strings.Join(msg, "\n")
-		for _, notify := range n.Notify {
+		for _, notify := range n.Notifiers {
 			if err := notify.Send(n.Client, newMessage); err != nil {
 				log.Println("notify send error", err)
 				errs = append(errs, err)
@@ -51,7 +51,7 @@ func (n *Notify) Send(message interface{}) error {
 
 	case map[string]interface{}:
 		// 處理 Raw message
-		for _, notify := range n.Notify {
+		for _, notify := range n.Notifiers {
 			if err := notify.SendRaw(n.Client, msg); err != nil {
 				log.Println("notify send error", err)
 				errs = append(errs, err)
@@ -83,7 +83,7 @@ func request(client *http.Client, req *http.Request) error {
 }
 
 func (n *Notify) Telegram(botToken, chatId string) *Notify {
-	n.Notify = append(n.Notify, &telegram{
+	n.Notifiers = append(n.Notifiers, &telegram{
 		BotToken: botToken,
 		ChatID:   chatId,
 	})
@@ -136,7 +136,7 @@ func (t *telegram) SendRaw(client *http.Client, message map[string]interface{}) 
 }
 
 func (n *Notify) Line(botToken, chatId string) *Notify {
-	n.Notify = append(n.Notify, &line{
+	n.Notifiers = append(n.Notifiers, &line{
 		BotToken: botToken,
 		ChatID:   chatId,
 	})
@@ -190,7 +190,7 @@ func (l *line) SendRaw(client *http.Client, message map[string]interface{}) erro
 }
 
 func (n *Notify) Discord(botToken, channelID string) *Notify {
-	n.Notify = append(n.Notify, &discord{
+	n.Notifiers = append(n.Notifiers, &discord{
 		BotToken: botToken,
 		ChatID:   channelID,
 	})
