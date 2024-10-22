@@ -32,20 +32,18 @@ func (n *Notify) Send(message interface{}) error {
 	var errs []error
 
 	switch msg := message.(type) {
-	case []string, string:
-		// 統一處理字串相關的消息
-		strMsg := func() string {
-			switch v := msg.(type) {
-			case string:
-				return v
-			case []string:
-				return strings.Join(v, "\n")
-			default:
-				return ""
-			}
-		}()
+	case string:
 		for _, notify := range n.Notify {
-			if err := notify.Send(n.Client, strMsg); err != nil {
+			if err := notify.Send(n.Client, msg); err != nil {
+				log.Println("notify send error", err)
+				errs = append(errs, err)
+			}
+		}
+
+	case []string:
+		newMessage := strings.Join(msg, "\n")
+		for _, notify := range n.Notify {
+			if err := notify.Send(n.Client, newMessage); err != nil {
 				log.Println("notify send error", err)
 				errs = append(errs, err)
 			}
