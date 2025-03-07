@@ -7,5 +7,6 @@ err := notify.New().
         Telegram(BotToken, ChatID).
         Line(AccessToken, ChatID).
         Discord(BotToken, ChannelID).
+        DiscordWebhook(WebhookUrl).
         Send(message)
 ```

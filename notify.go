@@ -75,7 +75,11 @@ func request(client *http.Client, req *http.Request) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusNoContent:
+		return nil
+	default:
 		return fmt.Errorf(req.Host, " API responded with status: %v", resp.Status)
 	}
 
@@ -238,6 +242,53 @@ func (d *discord) SendRaw(client *http.Client, message map[string]interface{}) e
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bot "+d.BotToken)
+
+	return request(client, req)
+}
+
+func (n *Notify) DiscordWebhook(webHookUrl string) *Notify {
+	n.Notifiers = append(n.Notifiers, &discordWebhook{
+		WebhookUrl: webHookUrl,
+	})
+	return n
+}
+
+type discordWebhook struct {
+	WebhookUrl string
+	Content    string `json:"content"`
+}
+
+func (d *discordWebhook) Send(client *http.Client, message string) error {
+	d.Content = message
+
+	jsonData, err := json.Marshal(d)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", d.WebhookUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	return request(client, req)
+}
+
+func (d *discordWebhook) SendRaw(client *http.Client, message map[string]interface{}) error {
+
+	jsonData, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", d.WebhookUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
 
 	return request(client, req)
 }
