@@ -75,12 +75,8 @@ func request(client *http.Client, req *http.Request) error {
 	}
 	defer resp.Body.Close()
 
-	switch resp.StatusCode {
-	case http.StatusOK:
-	case http.StatusNoContent:
-		return nil
-	default:
-		return fmt.Errorf(req.Host, " API responded with status: %v", resp.Status)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("API %s responded with status: %v", req.Host, resp.Status)
 	}
 
 	return nil
